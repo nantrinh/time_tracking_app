@@ -22,15 +22,27 @@ class TimersDashboard extends React.Component {
     this.setState({
       timers: this.state.timers.concat(helpers.newTimer(timer))
     }); 
-  }
+  };
+
+  updateTimer = (attrs) => {
+    this.setState({
+      timers: this.state.timers.map((timer) => {
+        if (timer.id == attrs.id) {
+          return Object.assign({}, timer, attrs);
+        } else {
+          return timer; 
+        } 
+      }) 
+    }); 
+  };
 
   handleFormSubmit = (timer) => {
     if (timer.id === undefined) {
       this.createTimer(timer);
     } else {
-      return;  // code for editing a timer 
+      this.updateTimer(timer);
     }
-  }
+  };
 
   render() {
     return (
@@ -38,7 +50,7 @@ class TimersDashboard extends React.Component {
         <div className='column'>
           <EditableTimerList
             timers={this.state.timers}
-            handleFormSubmit={this.handleFormSubmit}
+            onFormSubmit={this.handleFormSubmit}
           />
           <ToggleableTimerForm
             onFormSubmit={this.handleFormSubmit}
@@ -50,6 +62,10 @@ class TimersDashboard extends React.Component {
 }
 
 class EditableTimerList extends React.Component {
+  handleFormSubmit = (timer) => {
+    this.props.onFormSubmit(timer); 
+  }
+
   render() {
     const timers = this.props.timers.map((timer) => (
       <EditableTimer
@@ -59,7 +75,7 @@ class EditableTimerList extends React.Component {
         project={timer.project}
         elapsed={timer.elapsed}
         runningSince={timer.runningSince}
-        handleFormSubmit={this.props.handleFormSubmit}
+        onFormSubmit={this.handleFormSubmit}
       />
     ));
 
@@ -74,32 +90,34 @@ class EditableTimerList extends React.Component {
 class EditableTimer extends React.Component {
   state = {
     editFormOpen: false, 
-  }
+  };
 
   openForm = () => {
     this.setState({editFormOpen: true}); 
-  }
+  };
 
   closeForm = () => {
     this.setState({editFormOpen: false}); 
-  }
+  };
 
   handleEditClick = () => {
     this.openForm();
-  }
+  };
 
   handleFormSubmit = (timer) => {
-    this.props.handleFormSubmit(timer); 
-  }
+    this.props.onFormSubmit(timer); 
+    this.closeForm(); 
+  };
 
   handleFormClose = () => {
     this.closeForm();
-  }
+  };
 
   render() {
     if (this.state.editFormOpen) {
       return (
         <TimerForm
+          id={this.props.id}
           title={this.props.title}
           project={this.props.project}
           onFormSubmit={this.handleFormSubmit}
@@ -160,20 +178,20 @@ class Timer extends React.Component {
 class ToggleableTimerForm extends React.Component {
   state = {
     isOpen: false, 
-  }
+  };
 
   handleFormOpen = () => {
     this.setState({isOpen: true}); 
-  }
+  };
 
   handleFormClose = () => {
     this.setState({isOpen: false}); 
-  }
+  };
 
   handleFormSubmit = (timer) => {
     this.props.onFormSubmit(timer); 
     this.setState({isOpen: false}); 
-  }
+  };
 
   render() {
     if (this.state.isOpen) {
@@ -195,16 +213,16 @@ class ToggleableTimerForm extends React.Component {
 class TimerForm extends React.Component {
   state = {
     title: this.props.title || '', 
-    project: this.props.title || '', 
-  }
+    project: this.props.project || '', 
+  };
 
   handleTitleChange = (e) => {
     this.setState({title: e.target.value});
-  }
+  };
 
   handleProjectChange = (e) => {
     this.setState({project: e.target.value});
-  }
+  };
 
   handleSubmit = () => {
     this.props.onFormSubmit({
@@ -212,7 +230,7 @@ class TimerForm extends React.Component {
       title: this.state.title,
       project: this.state.project,
     }); 
-  }
+  };
 
   render() {
     const submitText = this.props.id ? 'Update' : 'Create';
@@ -237,7 +255,7 @@ class TimerForm extends React.Component {
               />
             </div>
             <div className='ui two bottom attached buttons'>
-              <button className='ui basic blue button'onClick={this.handleSubmit}>
+              <button className='ui basic blue button' onClick={this.handleSubmit}>
                 {submitText}
               </button>
               <button className='ui basic red button' onClick={this.props.onFormClose}>
