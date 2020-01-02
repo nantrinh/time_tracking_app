@@ -69,10 +69,6 @@ class TimersDashboard extends React.Component {
 }
 
 class EditableTimerList extends React.Component {
-  handleFormSubmit = (timer) => {
-    this.props.onFormSubmit(timer); 
-  }
-
   render() {
     const timers = this.props.timers.map((timer) => (
       <EditableTimer
@@ -82,7 +78,7 @@ class EditableTimerList extends React.Component {
         project={timer.project}
         elapsed={timer.elapsed}
         runningSince={timer.runningSince}
-        onFormSubmit={this.handleFormSubmit}
+        onFormSubmit={this.props.onFormSubmit}
         onTrashClick={this.props.onTrashClick}
       />
     ));
@@ -149,6 +145,14 @@ class EditableTimer extends React.Component {
 }
 
 class Timer extends React.Component {
+  componentDidMount() {
+    this.forceUpdateInterval = setInterval(() => this.forceUpdate(), 50); 
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.forceUpdateInterval); 
+  }
+
   handleEditClick = () => {
     this.props.onEditClick(); 
   }
@@ -158,7 +162,10 @@ class Timer extends React.Component {
   }
 
   render() {
-    const elapsedString = helpers.renderElapsedString(this.props.elapsed);
+    const elapsedString = helpers.renderElapsedString(
+      this.props.elapsed, this.props.runningSince
+    );
+
     return (
       <div className='ui centered card'>
         <div className='content'>
@@ -222,7 +229,10 @@ class ToggleableTimerForm extends React.Component {
     } else {
       return (
         <div className='ui basic content center aligned segment'>
-          <button className='ui basic button icon' onClick={this.handleFormOpen}>
+          <button
+            className='ui basic button icon'
+            onClick={this.handleFormOpen}
+          >
             <i className='plus icon' />
           </button>
         </div>
