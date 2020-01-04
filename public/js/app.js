@@ -1,27 +1,26 @@
 class TimersDashboard extends React.Component {
   state = {
-     timers: [
-      {
-        title: 'Practice squat',
-        project: 'Gym Chores',
-        id: uuid.v4(),
-        elapsed: 5456099,
-        runningSince: Date.now(),
-      },
-      {
-        title: 'Bake squash',
-        project: 'Kitchen Chores',
-        id: uuid.v4(),
-        elapsed: 1273998,
-        runningSince: null,
-      },
-    ],
+     timers: [],
   }; 
 
-  createTimer = (timer) => {
-    this.setState({
-      timers: this.state.timers.concat(helpers.newTimer(timer))
+  componentDidMount() {
+    this.loadTimersFromServer();
+    setInterval(this.loadTimersFromServer, 5000);
+  }
+
+  loadTimersFromServer = () => {
+    client.getTimers((serverTimers) => {
+      this.setState({timers: serverTimers});
     }); 
+  }
+
+  createTimer = (timer) => {
+    const t = helpers.newTimer(timer);
+    this.setState({
+      timers: this.state.timers.concat(t)
+    }); 
+
+    client.createTimer(t);
   };
 
   updateTimer = (attrs) => {
@@ -34,25 +33,34 @@ class TimersDashboard extends React.Component {
         } 
       }), 
     }); 
+
+    client.updateTimer(attrs);
   };
 
   startTimer = (id) => {
+    const now = Date.now();
     this.setState({
       timers: this.state.timers.map((timer) => {
         if (timer.id === id) {
-          return Object.assign({}, timer, {runningSince: Date.now()}); 
+          return Object.assign({}, timer, {runningSince: now}); 
         } else {
           return timer; 
         } 
       }),
     }); 
+
+    client.startTimer({
+      id: id,
+      start: now,
+    });
   }
 
   stopTimer = (id) => {
+    const now = Date.now();
     this.setState({
       timers: this.state.timers.map((timer) => {
         if (timer.id === id) {
-          const lastElapsed = Date.now() - timer.runningSince;
+          const lastElapsed = now - timer.runningSince;
           return Object.assign({}, timer, {
             elapsed: timer.elapsed + lastElapsed,
             runningSince: null, 
@@ -62,6 +70,11 @@ class TimersDashboard extends React.Component {
         } 
       }),
     }); 
+
+    client.stopTimer({
+      id: id,
+      stop: now,
+    });
   }
 
   handleFormSubmit = (timer) => {
@@ -76,6 +89,8 @@ class TimersDashboard extends React.Component {
     this.setState({
        timers: this.state.timers.filter((timer) => timer.id !== id), 
     });  
+
+    client.deleteTimer({id: id});
   };
 
   handleStartClick = (id) => {
